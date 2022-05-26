@@ -1,23 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ToDoItem from "./ToDoItem";
 import InputArea from "./InputArea";
+import { getTodos, deleteTodoById, getTodo, postTodo } from "../api/user.service";
 
 function App() {
   const [items, setItems] = useState([]);
 
-  function addItem(inputText) {
+  async function addItem(inputText) {
+    const { data } = await postTodo(inputText);
+
+    const newTodo = await getTodo(data)
+
     setItems(prevItems => {
-      return [...prevItems, inputText];
+      return [...prevItems, newTodo.data];
     });
   }
 
-  function deleteItem(id) {
+  async function deleteItem(id) {
     setItems(prevItems => {
-      return prevItems.filter((item, index) => {
-        return index !== id;
+      return prevItems.filter((item) => {
+        return item._id !== id;
       });
     });
+    await deleteTodoById(id);
   }
+
+  useEffect(() => {
+    async function fetchTodos() {
+      const {data} = await getTodos();
+      setItems(data);
+    }
+
+    fetchTodos();
+  },[])
 
   return (
     <div className="container">
@@ -27,11 +42,11 @@ function App() {
       <InputArea onAdd={addItem} />
       <div>
         <ul>
-          {items.map((todoItem, index) => (
+          {items.map((todoItem) => (
             <ToDoItem
-              key={index}
-              id={index}
-              text={todoItem}
+              key={todoItem._id}
+              id={todoItem._id}
+              text={todoItem.todo}
               onChecked={deleteItem}
             />
           ))}
